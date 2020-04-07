@@ -16,7 +16,7 @@ namespace SafeValidation
 
         public bool IsSuccess => this.Errors.Length == 0;
 
-        public string[] Errors { get; internal set; }
+        public string[] Errors { get; internal set; } = new string[0];
 
         internal T Value { get; set; }
 
