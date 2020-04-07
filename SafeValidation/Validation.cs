@@ -18,6 +18,7 @@ namespace SafeValidation
         public static IValidation<T> Success<T>(T value) 
             => new ValidationImpl<T> { Value = value };
 
+
         /// <summary>
         /// Builds <see cref="IValidation{T}"/> object with "failure" state
         /// </summary>
@@ -35,6 +36,29 @@ namespace SafeValidation
         /// <returns><see cref="IValidation{T}"/> object with "failure" state</returns>
         public static IValidation<T> Failure<T>(IEnumerable<string> messages)
             => new ValidationImpl<T> { Errors = messages.ToArray() };
+
+        /// <summary>
+        /// Returns empty validation with Success state
+        /// </summary>
+        /// <returns>Empty validation with Success state</returns>
+        public static IValidation<int> DefaultSuccess()
+            => new ValidationImpl<int> { Value = 1 };
+
+        /// <summary>
+        /// Returns empty validation with Failure state
+        /// </summary>
+        /// <param name="message">Error message</param>
+        /// <returns>Empty validation with Failure state</returns>
+        public static IValidation<int> DefaultFailure(string message)
+            => new ValidationImpl<int> { Errors = new[] { message } };
+
+        /// <summary>
+        /// Returns empty validation with Failure state
+        /// </summary>
+        /// <param name="message">Error messages</param>
+        /// <returns>Empty validation with Failure state</returns>
+        public static IValidation<int> DefaultFailure(IEnumerable<string> messages)
+            => new ValidationImpl<int> { Errors = messages.ToArray() };
 
         /// <summary>
         /// Lifts result of unsafe function to <see cref="IValidation{T}"/> context

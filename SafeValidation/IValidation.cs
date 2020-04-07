@@ -1,10 +1,9 @@
 ﻿namespace SafeValidation
 {
     /// <summary>
-    /// Represents value with two possibilities: either T or array of errors.
-    /// Used to represent a value which is either correct or have errors
+    /// Store validation errors
     /// </summary>
-    public interface IValidation<T>
+    public interface IValidation
     {
         /// <summary>
         /// Is value have errors. Should always be equal to the inversed IsSuccess.
@@ -20,7 +19,14 @@
         /// Array of encountered errors
         /// </summary>
         string[] Errors { get; }
+    }
 
+    /// <summary>
+    /// Represents value with two possibilities: either T or array of errors.
+    /// Used to represent a value which is either correct or have errors
+    /// </summary>
+    public interface IValidation<T> : IValidation
+    {
         /// <summary>
         /// Unsafe converstion to <typeparamref name="T"/>
         /// </summary>

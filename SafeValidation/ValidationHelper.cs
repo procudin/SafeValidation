@@ -149,6 +149,32 @@ namespace SafeValidation
         }
 
         /// <summary>
+        /// Combines two objects and returns Validation of left type
+        /// </summary>
+        /// <typeparam name="T1">Type of first <see cref="IValidation{T}"/></typeparam>
+        /// <typeparam name="T2">Type of second <see cref="IValidation{T}"/></typeparam>
+        /// <param name="first">First object</param>
+        /// <param name="second">Second object</param>
+        /// <returns>Validation of left type</returns>
+        public static IValidation<T1> ZipLeft<T1, T2>(this IValidation<T1> first, IValidation<T2> second)
+        {
+            return first.ZipWith(second, (fst, snd) => fst);
+        }
+
+        /// <summary>
+        /// Combines two objects and returns Validation of right type
+        /// </summary>
+        /// <typeparam name="T1">Type of first <see cref="IValidation{T}"/></typeparam>
+        /// <typeparam name="T2">Type of second <see cref="IValidation{T}"/></typeparam>
+        /// <param name="first">First object</param>
+        /// <param name="second">Second object</param>
+        /// <returns>Validation of right type</returns>
+        public static IValidation<T2> ZipRight<T1, T2>(this IValidation<T1> first, IValidation<T2> second)
+        {
+            return first.ZipWith(second, (fst, snd) => snd);
+        }
+
+        /// <summary>
         /// Combines three <see cref="IValidation{T}"/> with resultSelector function
         /// </summary>
         /// <typeparam name="T1">Type of first <see cref="IValidation{T}"/></typeparam>
