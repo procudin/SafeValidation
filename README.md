@@ -24,29 +24,29 @@
 public IValidation<string> ValidateUsername(string username)
 {
     if (string.IsNullOrEmpty(username))
-	{
-		return Validation.Failure<string>("Username is empty");
-	}
-	if (!username.Contains("test"))
-	{
-		return Validation.Failure<string>("No such user");
-	}
-	return Validation.Success(username);
+    {
+        return Validation.Failure<string>("Username is empty");
+    }
+    if (!username.Contains("test"))
+    {
+        return Validation.Failure<string>("No such user");
+    }
+    return Validation.Success(username);
 }
 
 public IValidation<string> ValidateEmail(string email)
 {
-	if (string.IsNullOrWhiteSpace(email))
-	{
-	    return Validation.Failure<string>("Email is empty");
-	}
-	
-	if (!email.Contains("@"))
-	{
-		return Validation.Failure<string>("Email must contain @-sign");	
-	}		
-		
-	return Validation.Success(email);
+    if (string.IsNullOrWhiteSpace(email))
+    {
+        return Validation.Failure<string>("Email is empty");
+    }
+    
+    if (!email.Contains("@"))
+    {
+        return Validation.Failure<string>("Email must contain @-sign"); 
+    }       
+        
+    return Validation.Success(email);
 }
 ```
 
@@ -55,8 +55,8 @@ public IValidation<string> ValidateEmail(string email)
 ```cs
 public class FormData
 {
-	public string Username { get; set; }
-	public string Email { get; set; }
+    public string Username { get; set; }
+    public string Email { get; set; }
 }
 ```
 
@@ -65,8 +65,7 @@ public class FormData
 ```cs
 // возращает объект FormData или первую найденную ошибку
 public IValidation<FormData> Validate1(string username, string email)
-{
-   
+{   
     return from validatedUsername in ValidateUsername(username)    // typeof(validatedUsername) == string
            from validatedEmail in ValidateEmail(email)             // typeof(validatedEmail)    == string
            select new FormData { Username = validatedUsername, Email = validatedEmail };
@@ -80,12 +79,12 @@ public IValidation<FormData> Validate2(string username, string email)
            
            // раздельно валидируем username и email а затем объединям результат валидации
            let wrappedUsername = ValidateUsername(username)    // typeof(wrappedUsername) == IValidation<string>
-		   let wrappedEmail = ValidateEmail(email)             // typeof(wrappedEmail)    == IValidation<string>
-		   let wrappedAll = wrappedUsername.ZipWith(wrappedEmail, (validatedUsername, validatedEmail) => (validatedUsername, validatedEmail))                                     
-		   
-		   // конвертирует результаты независимой валидации в FormData
-		   from data in wrappedAll
-		   select new FormData { Username = data.validatedUsername, Email = data.validatedEmail  };
+           let wrappedEmail = ValidateEmail(email)             // typeof(wrappedEmail)    == IValidation<string>
+           let wrappedAll = wrappedUsername.ZipWith(wrappedEmail, (validatedUsername, validatedEmail) => (validatedUsername, validatedEmail))                                     
+           
+           // конвертирует результаты независимой валидации в FormData
+           from data in wrappedAll
+           select new FormData { Username = data.validatedUsername, Email = data.validatedEmail  };
 }
 
 
@@ -93,17 +92,17 @@ public IValidation<FormData> Validate2(string username, string email)
 // позволяет преобразовать функцию вида (string, string) => string в функцию вида (IValidation<string>, IValidation<string>) => IValidation<string>
 public IValidation<FormData> Validate3(string username, string email)
 {
-	// строим функцию создания объекта
-	Func<string, string, FormData> objectBulider = (uname, mail) => new FormData { Username = uname, Email = mail };
-	
-	// вносим ее в контекст IValidation
-	Func<IValidation<string>, IValidation<string>, IValidation<FormData>> liftedObjectBulider = objectBulider.Lift();
-	
-	// валидируем 
-	var validatedUsername = ValidateUsername(username);
-	var validatedEmail = ValidateEmail(email);
-		
-	// передаем функции создания наши результаты валидации
-	return liftedObjectBulider(validatedUsername, validatedEmail)
+    // строим функцию создания объекта
+    Func<string, string, FormData> objectBulider = (uname, mail) => new FormData { Username = uname, Email = mail };
+    
+    // вносим ее в контекст IValidation
+    Func<IValidation<string>, IValidation<string>, IValidation<FormData>> liftedObjectBulider = objectBulider.Lift();
+    
+    // валидируем 
+    var validatedUsername = ValidateUsername(username);
+    var validatedEmail = ValidateEmail(email);
+        
+    // передаем функции создания наши результаты валидации
+    return liftedObjectBulider(validatedUsername, validatedEmail)
 }
 ```
