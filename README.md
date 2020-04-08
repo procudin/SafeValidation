@@ -88,14 +88,13 @@ public IValidation<FormData> Validate2(string username, string email)
 }
 
 
-// метод на аппликативных функторах, 
-// позволяет преобразовать функцию вида (string, string) => string в функцию вида (IValidation<string>, IValidation<string>) => IValidation<string>
+// возращает объект FormData или все найденные ошибки
 public IValidation<FormData> Validate3(string username, string email)
 {
     // строим функцию создания объекта
     Func<string, string, FormData> objectBulider = (uname, mail) => new FormData { Username = uname, Email = mail };
     
-    // вносим ее в контекст IValidation
+    // вносим ее в контекст IValidation (Lift позволяет преобразовать функцию вида (a, b) => c в функцию вида (IValidation<a>, IValidation<b>) => IValidation<c>)
     Func<IValidation<string>, IValidation<string>, IValidation<FormData>> liftedObjectBulider = objectBulider.Lift();
     
     // валидируем 
