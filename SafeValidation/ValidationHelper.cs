@@ -76,8 +76,6 @@ namespace SafeValidation
 
         /// <summary>
         /// Implementation of Applicative functor's apply function.
-        /// Made just for fun, it does not make practical sense now.
-        /// It may be used in the future for implementing Lift function
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="R"></typeparam>
@@ -205,5 +203,47 @@ namespace SafeValidation
         {
             return ZipWith3(first, second, third, Tuple.Create);
         }
+
+        /// <summary>
+        /// Lifts source function to IValidation context
+        /// </summary>        
+        /// <param name="source">Source function</param>
+        /// <returns>Source function lifted to IValidation context</returns>
+        public static Func<IValidation<T1>, IValidation<T2>, IValidation<R>> Lift<T1, T2, R>(this Func<T1, T2, R> source)
+        {
+            var sourceCurried = source.Curry();
+            return (x1, x2) => x1.Select(sourceCurried).Apply(x2);
+        }
+
+        /// <summary>
+        /// Lifts source function to IValidation context
+        /// </summary>        
+        /// <param name="source">Source function</param>
+        /// <returns>Source function lifted to IValidation context</returns>
+        public static Func<IValidation<T1>, IValidation<T2>, IValidation<T3>, IValidation<R>> Lift<T1, T2, T3, R>(this Func<T1, T2, T3, R> source)
+        {
+            var sourceCurried = source.Curry();
+            return (x1, x2, x3) => x1.Select(sourceCurried).Apply(x2).Apply(x3);
+        }
+
+        /// <summary>
+        /// Lifts source function to IValidation context
+        /// </summary>        
+        /// <param name="source">Source function</param>
+        /// <returns>Source function lifted to IValidation context</returns>
+        public static Func<IValidation<T1>, IValidation<T2>, IValidation<T3>, IValidation<T4>, IValidation<R>> Lift<T1, T2, T3, T4, R>(this Func<T1, T2, T3, T4, R> source)
+        {
+            var sourceCurried = source.Curry();
+            return (x1, x2, x3, x4) => x1.Select(sourceCurried).Apply(x2).Apply(x3).Apply(x4);
+        }
+
+        private static Func<T1, Func<T2, R>> Curry<T1, T2, R>(this Func<T1, T2, R> func)
+            => x1 => x2 => func(x1, x2);
+
+        private static Func<T1, Func<T2, Func<T3, R>>> Curry<T1, T2, T3, R>(this Func<T1, T2, T3, R> func)
+            => x1 => x2 => x3 => func(x1, x2, x3);
+
+        private static Func<T1, Func<T2, Func<T3, Func<T4, R>>>> Curry<T1, T2, T3, T4, R>(this Func<T1, T2, T3, T4, R> func)
+            => x1 => x2 => x3 => x4 => func(x1, x2, x3, x4);
     }
 }
