@@ -117,7 +117,7 @@ namespace SafeValidation
             // Can be implemented implicitly with Apply, but done exlplicitly due to perfommance issue.
             if (first.IsFailure && second.IsFailure)
             {
-                return Validation.Failure<R>(first.Errors.Union(second.Errors));
+                return Validation.Failure<R>(first.Errors.Concat(second.Errors));
             }
 
             if (first.IsFailure)
