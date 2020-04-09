@@ -102,6 +102,6 @@ public IValidation<FormData> Validate3(string username, string email)
     var validatedEmail = ValidateEmail(email);
         
     // передаем функции создания наши результаты валидации
-    return liftedObjectBulider(validatedUsername, validatedEmail)
+    return liftedObjectBulider(validatedUsername, validatedEmail);
 }
 ```
