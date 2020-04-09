@@ -24,7 +24,7 @@ namespace SafeValidation
         {
             if (this.IsFailure)
             {
-                throw new Exception("Cannot unwrap IValidation with error state");
+                throw new Exception("Cannot unwrap IValidation with failure state");
             }
             return this.Value;
         }
