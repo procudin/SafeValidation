@@ -110,7 +110,7 @@ public IValidation<FormData> ValidateWithZip(string username, string email)
 
 // Возращает объект FormData или все найденные ошибки
 // Поведение аналогично ValidateWithZip, с использованием функции Lift вместо Zip
-// Lift позволяет преобразовать функцию вида (a, b) => c в (IValidation<a>, IValidation<b>) => IValidation<c>,
+// Lift позволяет преобразовать функцию вида (A, B) => C в (IValidation<A>, IValidation<B>) => IValidation<C>,
 // что дает возможность передавать исходной функции значения в контексте IValidation
 public IValidation<FormData> ValidateApplicative(string username, string email)
 {
