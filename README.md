@@ -118,7 +118,7 @@ public IValidation<FormData> ValidateApplicative(string username, string email)
     Func<string, string, FormData> objectBulider = (uname, mail) => new FormData { Username = uname, Email = mail };
 
     // вносим ее в контекст IValidation
-    Func<IValidation<string>, IValidation<string>, IValidation<FormData>> liftedObjectBulider = ValidationHelper.Lift<string, string, FormData>((uname, mail) => new FormData { Username = uname, Email = mail });
+    Func<IValidation<string>, IValidation<string>, IValidation<FormData>> liftedObjectBulider = objectBulider.Lift();
 
     // валидируем 
     var validatedUsername = ValidateUsername(username);
