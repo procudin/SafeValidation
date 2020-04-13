@@ -6,6 +6,28 @@ namespace SafeValidation
     public static class ValidationHelper
     {
         /// <summary>
+        /// Unwraps IValidation with callbacks
+        /// </summary>
+        /// <typeparam name="T">Source validation type</typeparam>
+        /// <param name="source">Source validation</param>
+        /// <param name="onSuccess">Action for value with Success state</param>
+        /// <param name="onFailure">Action for value with Failure state</param>
+        public static void Match<T>(
+            this IValidation<T> source,
+            Action<T> onSuccess,
+            Action<string[]> onFailure)
+        {
+            if (source.IsFailure)
+            {
+                onFailure(source.Errors);                
+            }
+            else
+            {
+                onSuccess(source.UnsafeUnwrap());
+            }
+        }
+
+        /// <summary>
         /// Implementation of Monad's bind function (also known as chain, flatMap, (>>=)).
         /// Converts source to target using conversion from resultSelector function.
         /// Сan be used to combine results for functions like A => IValidation{B}
