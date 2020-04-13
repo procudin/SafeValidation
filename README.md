@@ -8,13 +8,11 @@
  - Исключения, приводящие программу в неопределнное состояние (aka panics). Обычно тактие ошибки не обрабатываются на месте, а перехватываются и логгируются на самом верхнем уровне. Примеры таких ошибок - NullReference, OutOfMemory, и проч.
  - Ошибки, являющиеся частью доменной модели. Такие ошибки являются частью бизнесс-процесса и должны быть учтены при его проектировании. Примером таких ошибок могут служить ошибки валидации введенной пользователем формы, отправка строки некорректного формата серверу и проч.
     
-В языке C# стандартным и единственным подходом обработки ошибок в программе является использование исключений. Этот подход отлично подходит для работы с ошибками из первой группы, но для второй его использование не так удобно. Во первых, исключения ломают обычный процесс исполнения программы. Во вторых, по сигнатуре функции невозможно понять, выбрасывает ли она исключение (с этим в определенной степени справляются комментарии, но иногда после рафакторинга про них все забывают). В третьих, обработка исключений очень многословна и способна существенно раздуть размер кода. 
+В языке C# стандартным и единственным подходом обработки ошибок в программе является использование исключений. Этот подход отлично подходит для работы с ошибками из первой группы, но для второй его использование не так удобно. Во первых, исключения ломают обычный процесс исполнения программы. Во вторых, по сигнатуре функции невозможно понять, выбрасывает ли она исключение. В третьих, обработка исключений очень многословна и способна существенно раздуть размер кода. 
 
 В функциональных языках для обработки подобного рода ошибок обчно используется тип-сумма. Объект такого типа может хранить либо значение, либо найденную ошибку (например [Either](http://hackage.haskell.org/package/base-4.12.0.0/docs/Data-Either.html) в Haskell, [Result](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/results) в F#). Преимущество этого подхода заключается в первую очередь в нагладности - по типу возращаемого значения функции сразу можно понять, что она можно вернуть ошибку. Во вторых, использование указанных типов-оберток не позволит просто так достать из них значение, опустив при этом обработку исключительных ситуаций. 
 
 В отличие от типов вроде Either, которые обычно содержат только первую найденную ошибку, представленный в библиотеке тип Validation способен их аккумулировать. Это удобно использовать для задачи валидации, когда хочется сразу вернуть пользователю список найденных ошибок, а не ограничиваться только одной. 
-
-К сожалению, многие абстракции ФП невозможно применить на C# ввиду особенностей синтаксиса, однако основные из них - Монаду и Функтор можно реализовать средствами LINQ.
 
 ## Пример использования
 
@@ -63,44 +61,69 @@ public class FormData
 Далее есть несколько возможных подходов к комбинированию этих функций, от которых зависит конечный результат:
 
 ```cs
-// возращает объект FormData или первую найденную ошибку
-public IValidation<FormData> Validate1(string username, string email)
-{   
+
+// Возращает объект FormData или первую найденную ошибку
+// В случае, если одна из функций валидации вернет Failure, вычисление дальше продолжаться не будет
+// Воркфлоу валидации имеет следующий вид:
+//
+//  -----------------------------   validatedUsername      -----------------------   validatedEmail
+//  | ValidateUsername(username)|------------------------->| ValidateEmail(email)|-------------------------->        
+//  -----------------------------                          -----------------------  
+//               |                                                    |
+//               | Failure                                            | Failure 
+//               ↓                                                    ↓ 
+//               ------------------------------------------------------------------------------------------->
+//
+public IValidation<FormData> ValidateMonadic(string username, string email)
+{
     return from validatedUsername in ValidateUsername(username)    // typeof(validatedUsername) == string
            from validatedEmail in ValidateEmail(email)             // typeof(validatedEmail)    == string
            select new FormData { Username = validatedUsername, Email = validatedEmail };
 }
 
 
-// возращает объект FormData или все найденные ошибки
-public IValidation<FormData> Validate2(string username, string email)
+
+// Возращает объект FormData или все найденные ошибки
+// В отличие от ValidateMonadic, позволяет выполнить независимую валидацию с последующим объединением результата валидации функцией ZipWith
+// Воркфлоу валидации имеет следующий вид:
+//
+//  |---------------------------|   wrappedUsername     
+//  | ValidateUsername(username)|--------------------------↓
+//  |---------------------------|                          |------------------------------------|          (username, email)
+//                                                         | Zip(wrappedUsername, wrappedEmail) | ------------------------------->        
+//  |---------------------------|   wrappedEmail           |------------------------------------|
+//  |  ValidateEmail(email)     | -------------------------↑                ↓                                   Failure
+//  |---------------------------|                                           ----------------------------------------------------->
+//
+public IValidation<FormData> ValidateWithZip(string username, string email)
 {
     return from _ in Validation.DefaultSuccess()               // заглушка для начала do-нотации
            
-           // раздельно валидируем username и email а затем объединям результат валидации
            let wrappedUsername = ValidateUsername(username)    // typeof(wrappedUsername) == IValidation<string>
            let wrappedEmail = ValidateEmail(email)             // typeof(wrappedEmail)    == IValidation<string>
-           let wrappedAll = wrappedUsername.ZipWith(wrappedEmail, (validatedUsername, validatedEmail) => (validatedUsername, validatedEmail))                                     
+           let wrappedAll = wrappedUsername.ZipWith(wrappedEmail, (validatedUsername, validatedEmail) => (validatedUsername, validatedEmail))
            
-           // конвертирует результаты независимой валидации в FormData
            from data in wrappedAll
            select new FormData { Username = data.validatedUsername, Email = data.validatedEmail  };
 }
 
 
-// возращает объект FormData или все найденные ошибки
-public IValidation<FormData> Validate3(string username, string email)
+// Возращает объект FormData или все найденные ошибки
+// Поведение аналогично ValidateWithZip, с использованием функции Lift вместо Zip
+// Lift позволяет преобразовать функцию вида (A, B) => C в (IValidation<A>, IValidation<B>) => IValidation<C>,
+// что дает возможность передавать исходной функции значения в контексте IValidation
+public IValidation<FormData> ValidateApplicative(string username, string email)
 {
     // строим функцию создания объекта
     Func<string, string, FormData> objectBulider = (uname, mail) => new FormData { Username = uname, Email = mail };
-    
-    // вносим ее в контекст IValidation (Lift позволяет преобразовать функцию вида (a, b) => c в функцию вида (IValidation<a>, IValidation<b>) => IValidation<c>)
+
+    // вносим ее в контекст IValidation
     Func<IValidation<string>, IValidation<string>, IValidation<FormData>> liftedObjectBulider = objectBulider.Lift();
-    
+
     // валидируем 
     var validatedUsername = ValidateUsername(username);
     var validatedEmail = ValidateEmail(email);
-        
+
     // передаем функции создания наши результаты валидации
     return liftedObjectBulider(validatedUsername, validatedEmail);
 }
