@@ -65,16 +65,20 @@ namespace SafeValidation
             Func<TSource, IValidation<TIntermediate>> intermediateSelector,
             Func<TSource, TIntermediate, TResult> resultSelector)
         {
-            return source.SelectMany(v =>
+            if (source.IsFailure)
             {
-                var res = intermediateSelector(v);
-                if (res.IsFailure)
-                {
-                    return Validation.Failure<TResult>(res.Errors);
-                }
+                return Validation.Failure<TResult>(source.Errors);
+            }
+            var sourceValue = source.UnsafeUnwrap();
+            
+            var intermediate = intermediateSelector(sourceValue);
+            if (intermediate.IsFailure)
+            {
+                return Validation.Failure<TResult>(intermediate.Errors);
+            }
+            var intermediateValue = intermediate.UnsafeUnwrap();
 
-                return Validation.Success(resultSelector(v, res.UnsafeUnwrap()));
-            });
+            return Validation.Success(resultSelector(sourceValue, intermediateValue));
         }
 
         /// <summary>
