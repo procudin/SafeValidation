@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SafeValidation
@@ -261,6 +262,20 @@ namespace SafeValidation
         {
             var sourceCurried = source.Curry();
             return (x1, x2, x3, x4) => x1.Select(sourceCurried).Apply(x2).Apply(x3).Apply(x4);
+        }
+
+
+        /// <summary>
+        /// Traverses the collection of IValidation to IValidation of collection
+        /// </summary>
+        /// <typeparam name="T">Validation type param</typeparam>
+        /// <param name="collection">Source collection</param>
+        /// <returns>IValidation of collection</returns>
+        public static IValidation<IList<T>> Traverse<T>(this IEnumerable<IValidation<T>> collection)
+        {
+            return collection.Aggregate(
+                Validation.Success<IList<T>>(new List<T>()),
+                (acc, item) => acc.ZipWith(item, (lst, v) => { lst.Add(v); return lst; }));
         }
 
         private static Func<T1, Func<T2, R>> Curry<T1, T2, R>(this Func<T1, T2, R> func)
